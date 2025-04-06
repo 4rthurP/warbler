@@ -1,13 +1,12 @@
-from datetime import datetime
-import json
-
 from sqlalchemy import (
     String,
     Integer,
+    ForeignKey,
+    DateTime,
+    JSON,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
-    ForeignKey,
     mapped_column,
     relationship,
 )
@@ -19,9 +18,9 @@ class Base(DeclarativeBase):
 class WatcherRun(Base):
     __tablename__ = "watcher_runs"
     id = mapped_column(Integer, primary_key=True)
-    name = mapped_column(String)
-    run_start = mapped_column(datetime)
-    run_end = mapped_column(datetime, default=None, nullable=True)
+    name = mapped_column(String(255))
+    run_start = mapped_column(DateTime)
+    run_end = mapped_column(DateTime, default=None, nullable=True)
     run_status = mapped_column(String(50))
     entries = relationship("Entry")
     def __repr__(self) -> str:
@@ -30,17 +29,17 @@ class WatcherRun(Base):
 class EntryModel(Base):
     __tablename__ = "entries"
     id = mapped_column(Integer, primary_key=True)
-    source = mapped_column(String)
-    title = mapped_column(String)
-    service = mapped_column(String)
-    status = mapped_column(String)
-    watcher_name = mapped_column(String)
+    source = mapped_column(String(255))
+    title = mapped_column(String(255))
+    service = mapped_column(String(255))
+    status = mapped_column(String(255))
+    watcher_name = mapped_column(String(255))
     watcher_run_id = mapped_column(ForeignKey("watcher_runs.id"))
-    source_name = mapped_column(String)
-    source_type = mapped_column(String)
-    timestamp = mapped_column(datetime)
-    created_at = mapped_column(datetime)
-    additional_info = mapped_column(json)
+    source_name = mapped_column(String(255))
+    source_type = mapped_column(String(255))
+    timestamp = mapped_column(DateTime)
+    created_at = mapped_column(DateTime)
+    additional_info = mapped_column(JSON)
 
     def __repr__(self) -> str:
         return f"{self.entry_date} - New entry from {self.source}: {self.message} - Watched by {self.watcher_name} - Logged by {self.logger_name} ({self.logger_source})"

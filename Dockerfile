@@ -1,13 +1,13 @@
-FROM python:3.14-slim
+FROM python:3.13.2-slim
 
 # Set build arguments from .env file
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 ARG USER="app"
 ARG WORKDIR="/var/app"
-ARG CRON_SCHEDULE='* * * * *'
-ARG SCHEDULE_TOKEN
+ARG CRON_SCHEDULE
 ARG ENV_PATH="../.env"
+ARG CRON_LOG_PATH="/var/log/cron.log"
 
 
 RUN apt-get update && apt-get install -y \
@@ -24,9 +24,9 @@ RUN groupadd -g ${GROUP_ID} ${USER} && \
 useradd -u ${USER_ID} -g ${USER} -m -s /bin/bash ${USER}
 
 # Set permissions
-RUN if [ ! -z "$SCHEDULE_TOKEN" ]; then \
+RUN if [ ! -z "$CRON_SCHEDULE" ]; then \
         echo "Running scheduler install"; \
-        echo "${CRON_SCHEDULE} ${USER} CRON_TOKEN=${SCHEDULE_TOKEN} $(which php) ${WORKDIR}/schedule.php >> /var/log/cron.log 2>&1" > /etc/cron.d/pz-cron \
+        echo "${CRON_SCHEDULE} ${USER} ${WORKDIR}/run.sh ${WORKDIR}/run.py" > /etc/cron.d/${USER}-cron \
         && touch /var/log/cron.log \
         && chmod 666 /var/log/cron.log; \
     else \
@@ -35,7 +35,10 @@ RUN if [ ! -z "$SCHEDULE_TOKEN" ]; then \
 
 WORKDIR ${WORKDIR}
 COPY . .
+COPY ./pyproject.toml .
+COPY ./uv.lock .
 COPY ${ENV_PATH} .env
+COPY ${CRON_LOG_PATH} /var/log/cron.log
 
 #Setup uv
 RUN pip install uv \

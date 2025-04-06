@@ -5,7 +5,7 @@ from ..classes.watcher import Watcher
 from ..classes.file import File
 from ..classes.entry import Entry, EntryStatus
 
-from ..config import local_tz
+from .. import LOCAL_TZ
 
 class LogFileWatcher(Watcher):
 
@@ -18,7 +18,7 @@ class LogFileWatcher(Watcher):
                     'self', 
                     self.__class__.__name__,
                     'log',
-                    datetime.now(local_tz),
+                    datetime.now(LOCAL_TZ),
                     "LogFileWatcher: File not found",
                     f"File {self.source_file.path} does not exist"
                 )
@@ -74,7 +74,7 @@ class LogFileWatcher(Watcher):
                         'self', 
                         self.__class__.__name__,
                         'log',
-                        datetime.now(local_tz),
+                        datetime.now(LOCAL_TZ),
                         "LogFileWatcher: Unexpected END line",
                         f"Mismatch between the START line ({current_job.content[0]}) and the END line ({line.strip()})"
                         )

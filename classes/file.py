@@ -1,9 +1,9 @@
 import os
-from . import app_root
+from .. import APP_ROOT
 
 class File:
     def __init__(self, path):
-        self.path = os.path.join(app_root, path)
+        self.path = os.path.join(APP_ROOT, path)
 
     def read(self):
         if not self.exists():

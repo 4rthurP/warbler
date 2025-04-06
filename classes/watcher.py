@@ -3,12 +3,12 @@ from typing import List
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from notifier import Notifier
-from config import Config
-from entry import Entry
+from .notifier import Notifier
+from .config import Config
+from .entry import Entry
 
-from . import database, local_tz
-from models import WatcherRun, EntryModel
+from .. import engine, LOCAL_TZ
+from ..models import WatcherRun
 
 class Watcher:
     name: str
@@ -32,6 +32,7 @@ class Watcher:
             self.add_notifier(notifier)
 
     def run(self):
+        self.load()
         run = WatcherRun(
             name = self.name,
             run_start = datetime.now(),
@@ -45,7 +46,7 @@ class Watcher:
         self.save_run(run)
 
     def find_latest_run_date(self):
-        session = Session(database)
+        session = Session(engine)
         latest_entry = (
             session
             .query(WatcherRun)
@@ -57,7 +58,7 @@ class Watcher:
 
         if latest_entry:
             return latest_entry.entry_date
-        return datetime.now(tz = local_tz)
+        return datetime.now(tz = LOCAL_TZ)
     
     def find_new_logs(self, start_date: datetime) -> List:
         pass
@@ -70,7 +71,7 @@ class Watcher:
                 self.entries.extend(entries)
 
     def save_new_entries(self, run: WatcherRun):
-        session = Session(database)
+        session = Session(engine)
         for entry in self.entries:
             session.add(entry.get_model(run.id))
         session.commit()
@@ -83,13 +84,13 @@ class Watcher:
     def save_run(self, run: WatcherRun):
         run.run_end = datetime.now()
         run.run_status = 'complete'
-        session = Session(database)
+        session = Session(engine)
         session.add(run)
         session.commit()
         session.close()
 
-    def add_notifier(self, notifier):
-        self.notifiers.append(Notifier(**notifier))
+    def add_notifier(self, notifier: Notifier):
+        self.notifiers.append(notifier)
 
     def find_service(self, source: str):
         if source in self.services:

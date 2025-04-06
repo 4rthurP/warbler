@@ -1,32 +1,18 @@
-from watchers.file_watcher import FileWatcher
+from .watchers.logfile_watcher import LogFileWatcher
+from .notifiers.slack_notifier import SlackNotifier
 
-test_service = {
-    'name': 'test_service',
-    'source': 'test_source',
-    'service_type': 'test',
-    'config': {
-        'test': 'test'
-    }
-}
-
-test_notifier = {
-    'name': 'test_notifier',
-    'source': 'test_source',
-    'notifier_type': 'test',
-    'config': {
-        'test': 'test'
-    }
-}
-
+from . import CRON_LOG_FILE
 
 config = {
     'watchers': [
         {
-            'class': FileWatcher,
+            'class': LogFileWatcher,
             'name': 'test',
-            'source': '',
-            'services': [test_service],
-            'notifiers': [test_notifier],
+            'source': CRON_LOG_FILE,
+            'notifiers': SlackNotifier(
+                name='slack_cron',
+                webhook_url='https://hooks.slack.com/services/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'
+            )
         }
     ]
 }

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from models import EntryModel
+from ..models import EntryModel
 
 class EntryStatus:
     SUCCESS = "success"
