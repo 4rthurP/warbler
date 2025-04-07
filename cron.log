@@ -3,9 +3,4 @@ cron-wrapper.sh: ligne 15: test-cron.sh : commande introuvable
 2025-04-05 17:33:36 - END - test-cron.sh - PID: 77188 - Exit Code: 127 - Load Avg: 0.95 0.86 0.91 - Mem Usage: 66,46%
 2025-04-05 17:33:58 - START - /home/arthur/Dev/warbler/test-cron.sh - PID: 77404 - User: root
 cron-wrapper.sh: ligne 15: /home/arthur/Dev/warbler/test-cron.sh: Permission non accordée
-2025-04-05 17:33:58 - END - /home/arthur/Dev/warbler/test-cron.sh - PID: 77404 - Exit Code: 126 - Load Avg: 0.75 0.82 0.90 - Mem Usage: 66,22%Traceback (most recent call last):
-  File "/var/app/run.py", line 1, in <module>
-    from main import run_watchers
-  File "/var/app/main.py", line 4, in <module>
-    from .config import config
-ImportError: attempted relative import with no known parent package
+2025-04-05 17:33:58 - END - /home/arthur/Dev/warbler/test-cron.sh - PID: 77404 - Exit Code: 126 - Load Avg: 0.75 0.82 0.90 - Mem Usage: 66,22%
