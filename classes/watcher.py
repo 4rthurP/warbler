@@ -39,15 +39,15 @@ class Watcher:
             run_status = 'running',
         )
 
-        start_date = self.find_latest_entry_date()
-        self.find_new_logs(start_date)
+        start_date = self.find_latest_run_date()
+        self.entries = self.find_new_entries(start_date)
         self.save_new_entries(run)
-        self.send_new_entries(run)
+        self.send_new_entries()
         self.save_run(run)
 
     def find_latest_run_date(self):
         session = Session(engine)
-        latest_entry = (
+        latest_run: WatcherRun = (
             session
             .query(WatcherRun)
             .where(WatcherRun.name == self.name)
@@ -56,11 +56,11 @@ class Watcher:
         )
         session.close()
 
-        if latest_entry:
-            return latest_entry.entry_date
-        return datetime.now(tz = LOCAL_TZ)
+        if latest_run:
+            return latest_run.run_start.astimezone(LOCAL_TZ)
+        return datetime(1970, 1, 1, tzinfo=LOCAL_TZ)
     
-    def find_new_logs(self, start_date: datetime) -> List:
+    def find_new_entries(self, start_date: datetime) -> List:
         pass
 
     def parse_entries_from_logs(self):
@@ -73,13 +73,14 @@ class Watcher:
     def save_new_entries(self, run: WatcherRun):
         session = Session(engine)
         for entry in self.entries:
-            session.add(entry.get_model(run.id))
+            logging.info(f"Saving entry {entry} for run {run.id}")
+            session.add(entry.get_model(run.name, run.id))
         session.commit()
         session.close()
 
-    def send_new_entries(self, run: WatcherRun):
+    def send_new_entries(self):
         for notifier in self.notifiers:
-            notifier.send(run, self.entries)
+            notifier.send(self.entries)
 
     def save_run(self, run: WatcherRun):
         run.run_end = datetime.now()

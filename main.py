@@ -4,8 +4,6 @@ from fastapi import FastAPI
 from .config import config
 from .classes.config import Config
 
-from . import engine
-
 
 WATCHERS_CONFIG = Config(config)
 

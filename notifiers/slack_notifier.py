@@ -1,7 +1,9 @@
 import requests
+import logging
 
 from ..classes.notifier import Notifier
 from ..classes.entry import Entry, EntryStatus
+import json
 
 class SlackNotifier(Notifier):
     def __init__(self, name: str, webhook_url: str):
@@ -9,6 +11,12 @@ class SlackNotifier(Notifier):
         self.webhook_url = webhook_url
 
     def send(self, entries: list[Entry]):
+        # Check if there are any entries to send
+        if not entries or len(entries) == 0:
+            logging.debug("No entries to send to Slack.")
+            return
+        
+        # Create the payload for the Slack message
         payload = {
             "blocks": [
                 {
@@ -21,7 +29,7 @@ class SlackNotifier(Notifier):
                                     "type": "text",
                                     "text": "Warbler - Cron Tasks",
                                     "style": {
-                                        "bold": "true"
+                                        "bold": True
                                     }
                                 }
                             ]
@@ -32,47 +40,57 @@ class SlackNotifier(Notifier):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        f"text": f"{len(entries)} new tasks ran this last time."
+                        "text": f"{len(entries)} new tasks ran since last time."
                     }
-                },
-                {
-                    "type": "divider"
-                },
+                }                
             ]
         }
         
         # Iterate over the entries and add them to the payload as "overflow" blocks
         for entry in entries:
-            # Converts each line of the content to a separate option in the overflow menu
-            overflow_options = []
-            for i, content in enumerate(entry.content):
-                overflow_options.append(
-                    {
-                        "text": {
-                            "type": "plain_text",
-                            "text": f"{content}",
-                            "emoji": "true"
-                        },
-                        "value": f"value-{i}"
-                    }
-                )
-
+            # Display key information about the entry
+            payload["blocks"].append(
+                {
+                    "type": "divider"
+                }
+            )
             payload["blocks"].append(
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
                         "text": ":white_check_mark:" if entry.status == EntryStatus.SUCCESS else ":x:" + f"*{entry.title}*"
-                    },
-                    "accessory": {
-                        "type": "overflow",
-                        "options": overflow_options,
-                        "action_id": "overflow-action"
                     }
                 }
             )
 
+            # If the entry was not successful, add the content as a context block
+            if entry.status == EntryStatus.FAILURE:
+                payload["blocks"].append(
+                    {
+                        "type": "context",
+                        "elements": [
+                            {
+                                "type": "plain_text",
+                                "text": f"Error: {"\n".join(entry.content)}",
+                                "emoji": True
+                            }
+                        ]
+                    }
+                )
+        
         # Send the payload to the Slack webhook URL
-        response = requests.post(self.webhook_url, json=payload)
+        logging.info(f"Sending {len(entries)} entries to Slack")
+        logging.debug(f"Payload: {json.dumps(payload)}")
+        response = requests.post(
+            self.webhook_url, 
+            data=json.dumps(payload),
+            headers={"Content-Type": "application/json"}
+        )
+
+        # Check the response from Slack
         if response.status_code != 200:
-            print(f"Failed to send notification: {response.status_code}, {response.text}")
+            logging.error(f"Failed to send notification: {response.status_code}, {response.text}")
+            logging.error(f"Webhook URL: {self.webhook_url}")
+        else:
+            logging.info(f"Notification sent successfully to Slack: {response.status_code}")

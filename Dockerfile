@@ -45,4 +45,4 @@ RUN pip install uv \
     && uv sync \
     && uv tool install fastapi 
 
-CMD service cron start && uv run --all-packages fastapi dev main.py
+CMD service cron start && uv run --all-packages fastapi run main.py

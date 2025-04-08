@@ -1,9 +1,10 @@
 import re 
+import logging
 from datetime import datetime
 
 from ..classes.watcher import Watcher
 from ..classes.file import File
-from ..classes.entry import Entry, EntryStatus
+from ..classes.entry import Entry
 
 from .. import LOCAL_TZ
 
@@ -11,8 +12,11 @@ class LogFileWatcher(Watcher):
 
     source_file: File
 
-    def find_new_logs(self, start_date: datetime) -> list[Entry]:
+    def find_new_entries(self, start_date: datetime) -> list[Entry]:
+        self.source_file = File(self.config.get("source"))
+
         if not self.source_file.exists():
+            logging.warning(f"LogFileWatcher: File {self.source_file.path} does not exist")
             return [
                 Entry(
                     'self', 
@@ -39,10 +43,11 @@ class LogFileWatcher(Watcher):
                     current_job = None
 
                 timestamp, script, pid, user = self.parseStartLine(line.strip())
-                timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(LOCAL_TZ)
+                logging.debug(f"LogFileWatcher: Found START line: {line.strip()}")
 
                 # Check if the timestamp is after the start date
-                if timestamp >= start_date:
+                if timestamp <= start_date:
                     current_job = None
                     continue
                 
@@ -53,10 +58,10 @@ class LogFileWatcher(Watcher):
                     timestamp
                 )
 
-                current_job.properties['start_timestamp'] = timestamp
-                current_job.properties['script'] = script
-                current_job.properties['pid'] = int(pid)
-                current_job.properties['user'] = user
+                current_job.set('start_timestamp', timestamp)
+                current_job.set('script', script)
+                current_job.set('pid', int(pid))
+                current_job.set('user', user)
             
             # If we are not in a job, skip the line until we find a START line
             if current_job is None:
@@ -67,8 +72,9 @@ class LogFileWatcher(Watcher):
             # Check for END line
             if " - END - " in line:
                 timestamp, script, pid, exit_code, load_avg, mem_usage = self.parseEndLine(line.strip())
-                if script != current_job.get("script") or pid != current_job.get("pid"):
-                    current_job = None
+                if script != current_job.get("script") or int(pid) != current_job.get("pid"):
+                    # If the script or pid does not match, we have an unexpected END line
+                    logging.error(f"LogFileWatcher: Unexpected END line: {line.strip()}, expected script: -{current_job.get('script')}-, got -{script}-, expected pid: -{current_job.get('pid')}-, got -{pid}-")
                     jobs.append(
                         Entry(
                         'self', 
@@ -79,22 +85,27 @@ class LogFileWatcher(Watcher):
                         f"Mismatch between the START line ({current_job.content[0]}) and the END line ({line.strip()})"
                         )
                     )
+                    current_job = None
                     continue
                 
-                current_job.properties['exit_code'] = int(exit_code)
-                current_job.properties['load_avg'] = load_avg
-                current_job.properties['mem_usage'] = mem_usage
-                current_job.properties['end_timestamp'] = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
-                current_job.properties['duration'] = (current_job['end_timestamp'] - current_job['start_timestamp']).total_seconds()
-                current_job.status = 'success' if current_job['exit_code'] == 0 else 'failure'
-                current_job.title = f"{current_job.status if current_job.status == 'success' else current_job.status+'('+exit_code+')'}: Job {current_job['script']} (PID: {current_job['pid']}) on {current_job.properties['end_timestamp'].strftime('%Y-%m-%d %H:%M:%S')}"
+                current_job.set('exit_code', int(exit_code))
+                current_job.set('load_avg', load_avg)
+                current_job.set('mem_usage', mem_usage)
+                current_job.set('end_timestamp', datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(LOCAL_TZ))
+                current_job.set('duration', (current_job.get('end_timestamp') - current_job.get('start_timestamp')).total_seconds())
 
+                current_job.status = 'success' if current_job.get('exit_code') == 0 else 'failure'
+                current_job.title = f"{current_job.status if current_job.status == 'success' else current_job.status+'('+exit_code+')'}: Job {current_job.get('script')} (PID: {current_job.get('pid')}) on {current_job.get('end_timestamp').strftime('%Y-%m-%d %H:%M:%S')}"
+
+                logging.debug(f"LogFileWatcher: Found END line: {line.strip()}")
+                logging.debug(f"LogFileWatcher: Job {current_job.get('script')} (PID: {current_job.get('pid')}) ended with exit code {exit_code} and duration {current_job.get('duration')} seconds")
+                
                 jobs.append(current_job)
                 current_job = None
 
         return jobs
 
-    def parseStartLine(start_line):
+    def parseStartLine(self, start_line):
         """
         Parses a START log line and extracts:
         - Timestamp
@@ -112,7 +123,7 @@ class LogFileWatcher(Watcher):
         
         return None, None, None, None 
 
-    def parseEndLine(end_line):
+    def parseEndLine(self, end_line):
         """
         Parses an END log line and extracts:
         - Timestamp
@@ -123,11 +134,12 @@ class LogFileWatcher(Watcher):
         - Memory Usage
         """
         pattern = re.compile(
-            r"^(.*?) - END - (.*?) - PID: (\d+) - Exit Code: (\d+) - Load Avg: ([\d.]+ [\d.]+ [\d.]+) - Mem Usage: ([\d.]+%)$"
+            r"^(.*?) - END - (.*?) - PID: (\d+) - Exit Code: (\d+) - Load Avg: (.*?) - Mem Usage: (.*?)$"
         )
         match = pattern.match(end_line)
 
         if match:
             return match.groups()
         
+        logging.error(f"LogFileWatcher: Failed to parse END line: {end_line}")
         return None, None, None, None, None, None
