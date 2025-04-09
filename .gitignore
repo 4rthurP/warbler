@@ -1,7 +1,7 @@
 .venv
-.python-version
 .env
 __pycache__
 initialized.lock
 
 cron.log
+src/.python-version
