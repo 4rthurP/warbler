@@ -16,6 +16,7 @@ warbler:
     restart: unless-stopped
     tty: true
     volumes:
+        - ./path/to/your/.env:/var/app/.env
         - ./path/to/your/cron.log:/var/log/cron.log
 ```
 

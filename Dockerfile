@@ -30,7 +30,6 @@ RUN if [ ! -z "$CRON_SCHEDULE" ]; then \
 # Copy the application files
 WORKDIR ${WORKDIR}/app
 COPY ./src .
-COPY ${ENV_PATH} .env
 COPY ./src/run-script.sh ../run-script.sh
 
 #Setup uv
