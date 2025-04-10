@@ -7,15 +7,12 @@ from .models import Base
 
 load_dotenv()
 
-engine = create_engine(f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}")
+engine = create_engine(f"mysql+pymysql://{os.getenv('WARBLER_DATABASE_USER')}:{os.getenv('WARBLER_DATABASE_PASSWORD')}@{os.getenv('WARBLER_DATABASE_HOST')}:{os.getenv('WARBLER_DATABASE_PORT')}/{os.getenv('WARBLER_DATABASE_NAME')}")
 
 LOCAL_TZ = ZoneInfo(os.getenv("LOCAL_TZ", "Europe/Paris"))
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-
 LOCK_FILE = os.path.join(APP_ROOT, "initialized.lock")
-
-CRON_LOG_FILE = os.getenv("CRON_LOG_FILE", "/var/log/cron.log")
 
 def initialize_database():
     if os.path.exists(LOCK_FILE):
