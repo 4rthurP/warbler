@@ -14,9 +14,11 @@ export PATH="/var/app/.venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/u
 export PYTHONPATH="/var/app/.venv/bin"
 source /var/app/.venv/bin/activate
 
-# Load environment variables from a file
+# Load .env safely
 if [ -f "/var/app/.env" ]; then
-  export $(grep -v '^#' /var/app/.env | xargs)
+  set -a  # automatically export all variables
+  source /var/app/.env
+  set +a
 fi
 
 # Run the script
