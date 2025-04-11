@@ -1,5 +1,13 @@
 # Warbler
-Warbler is a work-in-progress framework aiming to help monitor sources, structures logs and send notifications to multiple outputs.
+Warbler is a work-in-progress python project aiming to help monitor sources, structures logs and send notifications to multiple outputs.
+
+For now warbler is only capable of watching cron files (structured through a dedicated bash wrapper), save the entries in database and send slack notifications
+
+Next-steps:
+- Add options to the cron wrapper: silence the output if task exited with code 0
+- Add more watchers: ??? 
+- Add more notifiers: ???
+- Pass env variables through the Dockerfile and not by mounting a .env
 
 # Setup
 ## Recommended installation
