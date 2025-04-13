@@ -59,7 +59,7 @@ class SlackNotifier(Notifier):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": ":white_check_mark:" if entry.status == EntryStatus.SUCCESS else ":x:" + f"*{entry.title}*"
+                        "text": ":white_check_mark:" + f"*{entry.title}*" if entry.status == EntryStatus.SUCCESS else ":x:" + f"*{entry.title}*"
                     }
                 }
             )
