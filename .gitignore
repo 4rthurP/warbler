@@ -4,6 +4,6 @@ __pycache__
 initialized.lock
 .ruff_cache
 
-config.py
+src/warbler/config.py
 cron.log
 src/.python-version
