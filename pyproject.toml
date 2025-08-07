@@ -1,0 +1,72 @@
+[project]
+name = "Warbler"
+version = "0.2.0"
+description = "[WIP] Python tool used to monitor sources, structures logs and send notifications to multiple outputs."
+readme = "README.md"
+requires-python = ">=3.13"
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "cryptography>=44.0.2",
+    "fastapi[standard]>=0.115.12",
+    "pymysql>=1.1.1",
+    "python-dotenv>=1.1.0",
+    "requests>=2.32.3",
+    "slack-sdk>=3.35.0",
+    "sqlalchemy>=2.0.40",
+    "watchdog>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+]
+
+[tool.ruff.lint]
+extend-select = [
+    "RUF",
+    "COM",
+    "Q",
+    "UP",
+    "I",
+    "PERF",
+    "N",
+    "FLY",
+    "PTH",
+    "TC",
+    "SIM",
+    "RET",
+    "FIX",
+    "C4",
+    "B",
+    "ASYNC",
+    "ANN001",
+]
+
+ignore = [
+    "COM812",
+]
+
+exclude = [
+    ".venv",
+    ".git",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

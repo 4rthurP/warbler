@@ -1,5 +1,7 @@
 import os
+
 from .. import APP_ROOT
+
 
 class File:
     def __init__(self, path):
@@ -7,13 +9,13 @@ class File:
 
     def read(self):
         if not self.exists():
-            raise FileNotFoundError(f'File {self.path} not found')
-        
+            raise FileNotFoundError(f"File {self.path} not found")
+
         with open(self.path) as f:
             return f.read()
 
     def write(self, data):
-        with open(self.path, 'w') as f:
+        with open(self.path, "w") as f:
             f.write(data)
 
     def exists(self):

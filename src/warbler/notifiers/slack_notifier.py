@@ -1,9 +1,11 @@
-import requests
+import json
 import logging
 
-from ..classes.notifier import Notifier
+import requests
+
 from ..classes.entry import Entry, EntryStatus
-import json
+from ..classes.notifier import Notifier
+
 
 class SlackNotifier(Notifier):
     def __init__(self, name: str, webhook_url: str):
@@ -15,7 +17,7 @@ class SlackNotifier(Notifier):
         if not entries or len(entries) == 0:
             logging.debug("No entries to send to Slack.")
             return
-        
+
         # Create the payload for the Slack message
         payload = {
             "blocks": [
@@ -28,39 +30,35 @@ class SlackNotifier(Notifier):
                                 {
                                     "type": "text",
                                     "text": "Warbler - Cron Tasks",
-                                    "style": {
-                                        "bold": True
-                                    }
+                                    "style": {"bold": True},
                                 }
-                            ]
+                            ],
                         }
-                    ]
+                    ],
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"{len(entries)} new tasks ran since last time."
-                    }
-                }                
+                        "text": f"{len(entries)} new tasks ran since last time.",
+                    },
+                },
             ]
         }
-        
+
         # Iterate over the entries and add them to the payload as "overflow" blocks
         for entry in entries:
             # Display key information about the entry
-            payload["blocks"].append(
-                {
-                    "type": "divider"
-                }
-            )
+            payload["blocks"].append({"type": "divider"})
             payload["blocks"].append(
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": ":white_check_mark:" + f"*{entry.title}*" if entry.status == EntryStatus.SUCCESS else ":x:" + f"*{entry.title}*"
-                    }
+                        "text": ":white_check_mark:" + f"*{entry.title}*"
+                        if entry.status == EntryStatus.SUCCESS
+                        else ":x:" + f"*{entry.title}*",
+                    },
                 }
             )
 
@@ -72,25 +70,29 @@ class SlackNotifier(Notifier):
                         "elements": [
                             {
                                 "type": "plain_text",
-                                "text": f"Error: {"\n".join(entry.content)}",
-                                "emoji": True
+                                "text": f"Error: {'\n'.join(entry.content)}",
+                                "emoji": True,
                             }
-                        ]
+                        ],
                     }
                 )
-        
+
         # Send the payload to the Slack webhook URL
         logging.info(f"Sending {len(entries)} entries to Slack")
         logging.debug(f"Payload: {json.dumps(payload)}")
         response = requests.post(
-            self.webhook_url, 
+            self.webhook_url,
             data=json.dumps(payload),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         # Check the response from Slack
         if response.status_code != 200:
-            logging.error(f"Failed to send notification: {response.status_code}, {response.text}")
+            logging.error(
+                f"Failed to send notification: {response.status_code}, {response.text}"
+            )
             logging.error(f"Webhook URL: {self.webhook_url}")
         else:
-            logging.info(f"Notification sent successfully to Slack: {response.status_code}")
+            logging.info(
+                f"Notification sent successfully to Slack: {response.status_code}"
+            )

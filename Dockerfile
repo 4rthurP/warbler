@@ -1,4 +1,4 @@
-FROM python:3.13.2-slim
+FROM python:3.13.3-slim
 
 # Set build arguments from .env file
 ARG USER_ID=1000
@@ -29,13 +29,17 @@ RUN if [ ! -z "$CRON_SCHEDULE" ]; then \
 
 # Copy the application files
 WORKDIR ${WORKDIR}/app
-COPY ./src .
-COPY ./src/run-script.sh ../run-script.sh
+COPY ./src/warbler .
+COPY ./src/warbler/run-script.sh ../run-script.sh
 
 #Setup uv
-RUN pip install uv \
-    && uv sync \
-    && uv tool install fastapi 
+COPY pyproject.toml uv.lock ./
+ENV UV_PROJECT_ENVIRONMENT=/usr/local
+RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --compile-bytecode --no-build --no-install-project --link-mode=copy
+
+RUN pip install uv && uv tool install fastapi 
 
 RUN chown -R ${USER}:${USER} ${WORKDIR}/app
 
