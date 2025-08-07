@@ -43,14 +43,16 @@ class LogFileWatcher(Watcher):
                     current_job = None
 
                 timestamp, script, pid, user = self.parseStartLine(line.strip())
+
+                # Handle timestamp and check it is after the start date
                 timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(LOCAL_TZ)
                 logging.debug(f"LogFileWatcher: Found START line: {line.strip()}")
-
-                # Check if the timestamp is after the start date
                 if timestamp <= start_date:
                     current_job = None
                     continue
                 
+                script = self.cleanScriptName(script)
+                # Create a new job entry
                 current_job = Entry(
                     'log',
                     self.source_file.path, 
@@ -72,9 +74,10 @@ class LogFileWatcher(Watcher):
             # Check for END line
             if " - END - " in line:
                 timestamp, script, pid, exit_code, load_avg, mem_usage = self.parseEndLine(line.strip())
+                script = self.cleanScriptName(script)
                 if script != current_job.get("script") or int(pid) != current_job.get("pid"):
                     # If the script or pid does not match, we have an unexpected END line
-                    logging.error(f"LogFileWatcher: Unexpected END line: {line.strip()}, expected script: -{current_job.get('script')}-, got -{script}-, expected pid: -{current_job.get('pid')}-, got -{pid}-")
+                    logging.error(f"LogFileWatcher: Unexpected END line: {line.strip()}, expected script: -{current_job.get("script")}-, got -{script}-, expected pid: -{current_job.get('pid')}-, got -{pid}-")
                     jobs.append(
                         Entry(
                         'self', 
@@ -143,3 +146,16 @@ class LogFileWatcher(Watcher):
         
         logging.error(f"LogFileWatcher: Failed to parse END line: {end_line}")
         return None, None, None, None, None, None
+    
+    def cleanScriptName(self, script_name):
+        """
+        Cleans the script name by removing the path and keeping only the file name.
+        """
+        if not script_name:
+            return ""
+        
+        last_slash_index = script_name.rfind("/")
+        if last_slash_index == -1:
+            return script_name
+        
+        return script_name[last_slash_index + 1:]
