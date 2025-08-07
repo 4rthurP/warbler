@@ -2,6 +2,7 @@
 .env
 __pycache__
 initialized.lock
+.ruff_cache
 
 config.py
 cron.log
