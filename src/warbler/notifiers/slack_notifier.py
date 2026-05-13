@@ -3,8 +3,8 @@ import logging
 
 import requests
 
-from ..classes.entry import Entry, EntryStatus
-from ..classes.notifier import Notifier
+from warbler.core.entry import Entry, EntryStatus
+from warbler.core.notifier import Notifier
 
 
 class SlackNotifier(Notifier):
@@ -19,8 +19,7 @@ class SlackNotifier(Notifier):
             return
 
         # Create the payload for the Slack message
-        payload = {
-            "blocks": [
+        payload_block: list[dict[str, str | list | dict]] = [
                 {
                     "type": "rich_text",
                     "elements": [
@@ -44,13 +43,13 @@ class SlackNotifier(Notifier):
                     },
                 },
             ]
-        }
+        
 
         # Iterate over the entries and add them to the payload as "overflow" blocks
         for entry in entries:
             # Display key information about the entry
-            payload["blocks"].append({"type": "divider"})
-            payload["blocks"].append(
+            payload_block.append({"type": "divider"})
+            payload_block.append(
                 {
                     "type": "section",
                     "text": {
@@ -64,7 +63,7 @@ class SlackNotifier(Notifier):
 
             # If the entry was not successful, add the content as a context block
             if entry.status == EntryStatus.FAILURE:
-                payload["blocks"].append(
+                payload_block.append(
                     {
                         "type": "context",
                         "elements": [
@@ -76,6 +75,10 @@ class SlackNotifier(Notifier):
                         ],
                     }
                 )
+
+        payload = {
+            "blocks": payload_block
+        }
 
         # Send the payload to the Slack webhook URL
         logging.info(f"Sending {len(entries)} entries to Slack")

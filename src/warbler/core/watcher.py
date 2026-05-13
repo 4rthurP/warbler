@@ -3,18 +3,19 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from .. import LOCAL_TZ, engine
-from ..models import WatcherRun
-from .config import Config
-from .entry import Entry
-from .notifier import Notifier
+from warbler import LOCAL_TZ, engine
+from warbler.core.config import Config
+from warbler.core.entry import Entry
+from warbler.core.notifier import Notifier
+from warbler.models import WatcherRun
 
 
 class Watcher:
-    notifiers: list[Notifier] = []
-    entries: dict[str, list[Entry]]
+    notifiers: list[Notifier]
+    entries: list[Entry]
 
     def __init__(self, config: Config):
+        self.notifiers = []
         self.config: Config = config
         self.name: str = config.get("name")
         self.source: str = config.get("source")
@@ -70,8 +71,8 @@ class Watcher:
         # If there is no run, return the epoch
         return datetime(1970, 1, 1, tzinfo=LOCAL_TZ)
 
-    def find_new_entries(self, start_date: datetime) -> list:
-        pass
+    def find_new_entries(self, start_date: datetime) -> list[Entry]:
+        return []
 
     def save_new_entries(self, run: WatcherRun):
         """Save the new entries to the database"""

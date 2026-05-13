@@ -1,11 +1,13 @@
 import logging
 from datetime import datetime
+from enum import Enum
+from typing import Any
 
-from .. import LOCAL_TZ
-from ..models import EntryModel
+from warbler import LOCAL_TZ
+from warbler.models import EntryModel
 
 
-class EntryStatus:
+class EntryStatus(Enum):
     SUCCESS = "success"
     FAILURE = "failure"
     WARNING = "warning"
@@ -14,8 +16,8 @@ class EntryStatus:
 
 
 class Entry:
-    properties: dict = {}
-    json_properties: dict[str, str] = {}
+    properties: dict
+    json_properties: dict[str, str]
     title: str
     source_type: str
     source_name: str
@@ -34,6 +36,8 @@ class Entry:
         content: list[str] | str | None = None,
         status: EntryStatus = EntryStatus.UNKNOWN,
     ):
+        self.properties = {}
+        self.json_properties = {}
         self.source_type = source_type
         self.source_name = source_name
         self.service = service
@@ -49,7 +53,7 @@ class Entry:
         elif isinstance(content, list):
             self.content = content
 
-    def get_model(self, watcher, run_id):
+    def get_model(self, watcher: str, run_id: str) -> EntryModel:
         return EntryModel(
             title=self.title,
             service=self.service,
@@ -63,7 +67,7 @@ class Entry:
             additional_info=self.json_properties,
         )
 
-    def set(self, key: str, value):
+    def set(self, key: str, value: Any):
         # Store the value as is for internal use
         self.properties[key] = value
 
@@ -72,7 +76,7 @@ class Entry:
             self.json_properties[key] = value
         elif isinstance(value, datetime):
             self.json_properties[key] = value.strftime("%Y-%m-%d %H:%M:%S")
-        elif isinstance(value, int) or isinstance(value, float):
+        elif isinstance(value, (int, float)):
             self.json_properties[key] = str(value)
         else:
             logging.warning(

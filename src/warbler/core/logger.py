@@ -1,11 +1,16 @@
-from ..models import Entry
+from warbler.models import EntryModel
 
 
 class Logger:
     name: str
+    entries: list[EntryModel]
 
     def __init__(self, config: dict):
-        self.name = config.get("name")
+        name = config.get("name")
+        if name is None:
+            raise ValueError("Logger config must include a name")
+
+        self.name = name
         self.source = config.get("source")
 
     def __str__(self):
@@ -15,5 +20,5 @@ class Logger:
         for entry in self.entries:
             self.log(entry)
 
-    def log(self, entry: Entry):
+    def log(self, entry:   EntryModel):
         pass

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from .classes.config import Config
-from .config import config
+from warbler.config import config
+from warbler.core.config import Config
 
 WATCHERS_CONFIG = Config(config)
 

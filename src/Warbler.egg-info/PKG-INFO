@@ -1,0 +1,95 @@
+Metadata-Version: 2.4
+Name: Warbler
+Version: 0.2.0
+Summary: [WIP] Python tool used to monitor sources, structures logs and send notifications to multiple outputs.
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: cryptography>=44.0.2
+Requires-Dist: fastapi[standard]>=0.115.12
+Requires-Dist: pymysql>=1.1.1
+Requires-Dist: python-dotenv>=1.1.0
+Requires-Dist: requests>=2.32.3
+Requires-Dist: slack-sdk>=3.35.0
+Requires-Dist: sqlalchemy>=2.0.40
+Requires-Dist: watchdog>=6.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+
+# Warbler
+Warbler is a work-in-progress python project aiming to help monitor sources, structures logs and send notifications to multiple outputs.
+
+For now warbler is only capable of watching cron files (structured through a dedicated bash wrapper), save the entries in database and send slack notifications
+
+Next-steps:
+- Add options to the cron wrapper: silence the output if task exited with code 0
+- Add more watchers: ??? 
+- Add more notifiers: ???
+- Pass env variables through the Dockerfile and not by mounting a .env
+
+# Setup
+## Recommended installation
+The recommended install method is via docker-compose
+
+```
+warbler:
+    build:
+        context: ./warbler/
+        dockerfile: Dockerfile
+        args:
+            ENV_PATH: '.env'
+            CRON_SCHEDULE: '5 * * * *'
+    restart: unless-stopped
+    tty: true
+    volumes:
+        - ./path/to/your/.env:/var/app/.env
+        - ./path/to/your/cron.log:/var/log/cron.log
+```
+
+## env variables
+```
+# Required env variables
+WARBLER_DATABASE_HOST=
+WARBLER_DATABASE_PORT=
+WARBLER_DATABASE_USER=
+WARBLER_DATABASE_PASSWORD=
+WARBLER_DATABASE_NAME=
+
+# Optional env variables
+LOCAL_TZ='Europe/Paris'
+```
+
+## Configuration
+Configuration is done through a dictionnary stored in src/config.py
+Use the example.config.py file to create your config  file.
+
+The dictionary should contain at least a 'watchers' key containing a list of watcher's configuration.
+A watcher configuration should be a dictionary containing a class, name, source and list of notifiers.
+
+```
+config = {
+    'watchers': [
+        {
+            'class': LogFileWatcher,
+            'name': 'test',
+            'source': "/var/log/cron.log",
+            'notifiers': [
+                    SlackNotifier(
+                    name='slack_cron',
+                    webhook_url=SLACK_WEBHOOK_URL,
+                )
+            ]
+        }
+    ]
+}
+```

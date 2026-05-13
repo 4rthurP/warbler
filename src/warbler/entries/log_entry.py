@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from ..classes.entry import Entry
+from warbler.core.entry import Entry
 
 
 class LogEntry(Entry):
@@ -25,7 +25,7 @@ class LogEntry(Entry):
         mem_usage: str,
     ):
         self.source = source
-        self.content = content
+        self.content = [content]
         self.date = date
         self.end_date = end_date
         self.duration = (end_date - date).total_seconds()

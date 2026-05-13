@@ -1,11 +1,12 @@
 import logging
 import re
 from datetime import datetime
+from pathlib import Path
 
-from .. import LOCAL_TZ
-from ..classes.entry import Entry
-from ..classes.file import File
-from ..classes.watcher import Watcher
+from warbler import LOCAL_TZ
+from warbler.core.entry import Entry, EntryStatus
+from warbler.core.file import File
+from warbler.core.watcher import Watcher
 
 
 class LogFileWatcher(Watcher):
@@ -32,7 +33,7 @@ class LogFileWatcher(Watcher):
         jobs: list[Entry] = []
         current_job = None
 
-        with open(self.source_file.path) as file:
+        with Path(self.source_file.path).open() as file:
             lines = file.readlines()
 
         for line in lines:
@@ -43,7 +44,7 @@ class LogFileWatcher(Watcher):
                     jobs.append(current_job)
                     current_job = None
 
-                timestamp, script, pid, user = self.parseStartLine(line.strip())
+                timestamp, script, pid, user = self.parse_start_line(line.strip())
 
                 # Handle timestamp and check it is after the start date
                 timestamp = datetime.strptime(
@@ -54,7 +55,7 @@ class LogFileWatcher(Watcher):
                     current_job = None
                     continue
 
-                script = self.cleanScriptName(script)
+                script = self.clean_script_name(script)
                 # Create a new job entry
                 current_job = Entry("log", self.source_file.path, script, timestamp)
 
@@ -72,9 +73,9 @@ class LogFileWatcher(Watcher):
             # Check for END line
             if " - END - " in line:
                 timestamp, script, pid, exit_code, load_avg, mem_usage = (
-                    self.parseEndLine(line.strip())
+                    self.parse_end_line(line.strip())
                 )
-                script = self.cleanScriptName(script)
+                script = self.clean_script_name(script)
                 if script != current_job.get("script") or int(pid) != current_job.get(
                     "pid"
                 ):
@@ -113,9 +114,9 @@ class LogFileWatcher(Watcher):
                 )
 
                 current_job.status = (
-                    "success" if current_job.get("exit_code") == 0 else "failure"
+                    EntryStatus.SUCCESS if current_job.get("exit_code") == 0 else EntryStatus.FAILURE
                 )
-                current_job.title = f"{current_job.status if current_job.status == 'success' else current_job.status + '(' + exit_code + ')'}: Job {current_job.get('script')} (PID: {current_job.get('pid')}) on {current_job.get('end_timestamp').strftime('%Y-%m-%d %H:%M:%S')}"
+                current_job.title = f"{current_job.status if current_job.status == EntryStatus.SUCCESS else current_job.status.value + '(' + exit_code + ')'}: Job {current_job.get('script')} (PID: {current_job.get('pid')}) on {current_job.get('end_timestamp').strftime('%Y-%m-%d %H:%M:%S')}"
 
                 logging.debug(f"LogFileWatcher: Found END line: {line.strip()}")
                 logging.debug(
@@ -127,7 +128,7 @@ class LogFileWatcher(Watcher):
 
         return jobs
 
-    def parseStartLine(self, start_line):
+    def parse_start_line(self, start_line: str):
         """
         Parses a START log line and extracts:
         - Timestamp
@@ -143,7 +144,7 @@ class LogFileWatcher(Watcher):
 
         return None, None, None, None
 
-    def parseEndLine(self, end_line):
+    def parse_end_line(self, end_line: str):
         """
         Parses an END log line and extracts:
         - Timestamp
@@ -164,7 +165,7 @@ class LogFileWatcher(Watcher):
         logging.error(f"LogFileWatcher: Failed to parse END line: {end_line}")
         return None, None, None, None, None, None
 
-    def cleanScriptName(self, script_name):
+    def clean_script_name(self, script_name: str) -> str:
         """
         Cleans the script name by removing the path and keeping only the file name.
         """
