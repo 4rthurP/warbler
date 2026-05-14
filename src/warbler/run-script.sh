@@ -23,4 +23,5 @@ fi
 
 # Run the script
 cd /var
-/var/app/.venv/bin/python3 -u -m app.$SCRIPT >> /var/runner.log 2>&1
+LOG_LOCATION="${WARBLER_LOG_PATH:-/var}"
+/var/app/.venv/bin/python3 -u -m app.$SCRIPT >> "$LOG_LOCATION"/runner.log 2>&1
