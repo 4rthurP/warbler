@@ -39,7 +39,7 @@ RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
     --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --compile-bytecode --no-build --no-install-project --link-mode=copy
 
-RUN pip install uv && uv tool install fastapi 
+RUN pip install uv && uv sync && uv tool install fastapi 
 
 RUN chown -R ${USER}:${USER} ${WORKDIR}/warbler
 
