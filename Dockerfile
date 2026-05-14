@@ -28,7 +28,7 @@ RUN if [ ! -z "$CRON_SCHEDULE" ]; then \
     fi
 
 # Copy the application files
-WORKDIR ${WORKDIR}/app
+WORKDIR ${WORKDIR}/warbler
 COPY ./src/warbler .
 COPY ./src/warbler/run-script.sh ../run-script.sh
 
@@ -41,6 +41,6 @@ RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
 
 RUN pip install uv && uv tool install fastapi 
 
-RUN chown -R ${USER}:${USER} ${WORKDIR}/app
+RUN chown -R ${USER}:${USER} ${WORKDIR}/warbler
 
 CMD service cron start && uv run --all-packages fastapi run main.py

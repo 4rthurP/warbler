@@ -1,3 +1,3 @@
-from .main import run_watchers
+from warbler.main import run_watchers
 
 run_watchers()
