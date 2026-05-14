@@ -1,13 +1,13 @@
 import logging
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from warbler import LOCAL_TZ
 from warbler.models import EntryModel
 
 
-class EntryStatus(Enum):
+class EntryStatus(StrEnum):
     SUCCESS = "success"
     FAILURE = "failure"
     WARNING = "warning"
@@ -22,7 +22,7 @@ class Entry:
     source_type: str
     source_name: str
     service: str
-    timestamp: datetime
+    timestamp: datetime | str
     content: list[str]
     status: EntryStatus
 
@@ -31,18 +31,18 @@ class Entry:
         source_type: str,
         source_name: str,
         service: str,
-        timestamp: datetime,
+        timestamp: datetime | str,
         title: str | None = None,
-        content: list[str] | str | None = None,
-        status: EntryStatus = EntryStatus.UNKNOWN,
+        content: list[str]| str | None = None,
+        status: EntryStatus | str = EntryStatus.UNKNOWN,
     ):
         self.properties = {}
         self.json_properties = {}
         self.source_type = source_type
         self.source_name = source_name
         self.service = service
-        self.timestamp = timestamp
-        self.status = status
+        self.timestamp = timestamp if isinstance(timestamp, datetime) else datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(LOCAL_TZ) 
+        self.status = EntryStatus(status) if isinstance(status, str) else status
 
         if title is not None:
             self.title = title

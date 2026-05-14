@@ -57,7 +57,7 @@ class LogFileWatcher(Watcher):
 
                 script = self.clean_script_name(script)
                 # Create a new job entry
-                current_job = Entry("log", self.source_file.path, script, timestamp)
+                current_job = Entry("log", str(self.source_file.path), script, timestamp)
 
                 current_job.set("start_timestamp", timestamp)
                 current_job.set("script", script)
