@@ -19,6 +19,11 @@ class PingWatcher(CommandWatcher):
         if not self.config.get("command"):
             self.command = self.get_command()
 
+        self.return_on_success = self.config.get(
+            "return_on_success",
+            self.return_on_success,
+        )
+
     def get_command(self):
         return f"ping -c {self.source}"
 
@@ -27,6 +32,6 @@ class PingWatcher(CommandWatcher):
 
         if entry.status == EntryStatus.FAILURE or self.return_on_success:
             return [entry]
-        
+
         logging.debug(f"PingWatcher: Host {self.source} is up, no entry returned")
         return []
