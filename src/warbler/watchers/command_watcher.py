@@ -21,6 +21,8 @@ class CommandWatcher(Watcher):
         elif not hasattr(self, "command"):
             raise RuntimeError("CommandWatcher: No command specified in the class")
 
+        self.success_match_pattern = self.config.get("success_match_pattern")
+
         # Run the command and get the output
         logging.debug(f"CommandWatcher: Running command: {self.command}")
         cmd_entry = self.run_command(self.command)
@@ -40,7 +42,6 @@ class CommandWatcher(Watcher):
             status = EntryStatus.FAILURE
         elif self.success_match_pattern:
             if re.search(self.success_match_pattern, result.stdout):
-
                 status = EntryStatus.SUCCESS
             else:
                 status = EntryStatus.FAILURE
