@@ -10,7 +10,6 @@ fi
 SCRIPT="$1"
 
 APP_PATH="${APP_PATH:-/var/warbler}"
-cd "$APP_PATH"
 
 # Set up the virtual environment
 export PATH="$APP_PATH/.venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin"
@@ -24,8 +23,7 @@ if [ -f "$APP_PATH/.env" ]; then
   set +a
 fi
 
-SRC_PATH="${SRC_PATH:-/var}"
-cd "$SRC_PATH"
+cd "$APP_PATH"
 # Run the script
 LOG_LOCATION="${WARBLER_LOG_PATH:-/var}"
-"$APP_PATH/.venv/bin/python3" -u -m warbler.$SCRIPT >> "$LOG_LOCATION"/runner.log 2>&1
+.venv/bin/python3 -u -m warbler.$SCRIPT >> "$LOG_LOCATION"/runner.log 2>&1

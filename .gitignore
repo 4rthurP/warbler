@@ -7,3 +7,5 @@ initialized.lock
 src/warbler/config.py
 cron.log
 src/.python-version
+
+*.egg-info/
