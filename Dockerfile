@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     cmake \
     cron \
-    ping \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/* \
     && apt autoremove -y
 
