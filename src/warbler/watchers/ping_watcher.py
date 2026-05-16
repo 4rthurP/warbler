@@ -14,7 +14,9 @@ class PingWatcher(CommandWatcher):
     A watcher that pings a specified host to check its availability.
     Only returns an entry if the ping command fails, indicating the host is down.
     """
-
+    # Override parent's save_if_empty. By default, don't save an entry if the ping is successful and there are no changes
+    save_if_empty: bool = False  
+    
     return_on_success: bool = False
     command: str = ""
     retry_interval: str | None = "5m"  # Notify every 5 minutes the host status
