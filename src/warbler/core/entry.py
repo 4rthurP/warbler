@@ -3,6 +3,8 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
+from pydantic import BaseModel, Field, PrivateAttr
+
 from warbler import LOCAL_TZ
 from warbler.models import EntryModel
 
@@ -15,56 +17,42 @@ class EntryStatus(StrEnum):
     UNKNOWN = "unknown"
 
 
-class Entry:
-    properties: dict
-    json_properties: dict[str, str]
-    title: str
+class Entry(BaseModel):
+    properties: dict = Field(default_factory=dict)
+    json_properties: dict[str, str] = Field(default_factory=dict)
+    title: str | None = None
     source_type: str
     source_name: str
     service: str
     timestamp: datetime | str
-    content: list[str]
-    status: EntryStatus
+    content: list[str] | str | None = None
+    status: EntryStatus | str = EntryStatus.UNKNOWN
 
-    def __init__(
-        self,
-        source_type: str,
-        source_name: str,
-        service: str,
-        timestamp: datetime | str,
-        title: str | None = None,
-        content: list[str]| str | None = None,
-        status: EntryStatus | str = EntryStatus.UNKNOWN,
-    ):
-        self.properties = {}
-        self.json_properties = {}
-        self.source_type = source_type
-        self.source_name = source_name
-        self.service = service
-        self.timestamp = timestamp if isinstance(timestamp, datetime) else datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(LOCAL_TZ) 
-        self.status = EntryStatus(status) if isinstance(status, str) else status
+    _content: list[str] = PrivateAttr()
+    _status: EntryStatus = PrivateAttr()
+    _json_properties: dict[str, str] = PrivateAttr()
 
-        if title is not None:
-            self.title = title
 
-        self.content = []
-        if isinstance(content, str):
-            self.content.append(content)
-        elif isinstance(content, list):
-            self.content = content
+    def model_post_init(self, context: Any) -> None:
+        self._status = EntryStatus(self.status)
+
+        if isinstance(self.content, str):
+            self._content = [self.content]
+        elif isinstance(self.content, list):
+            self._content = self.content
 
     def get_model(self, watcher: str, run_id: str) -> EntryModel:
         return EntryModel(
             title=self.title,
             service=self.service,
-            status=self.status,
+            status=self._status,
             watcher_name=watcher,
             watcher_run_id=run_id,
             source_name=self.source_name,
             source_type=self.source_type,
             timestamp=self.timestamp,
             created_at=datetime.now(tz=LOCAL_TZ),
-            additional_info=self.json_properties,
+            additional_info=self._json_properties,
         )
 
     def set(self, key: str, value: Any):
@@ -73,16 +61,16 @@ class Entry:
 
         # Convert the value to a string for JSON serialization
         if isinstance(value, str):
-            self.json_properties[key] = value
+            self._json_properties[key] = value
         elif isinstance(value, datetime):
-            self.json_properties[key] = value.strftime("%Y-%m-%d %H:%M:%S")
+            self._json_properties[key] = value.strftime("%Y-%m-%d %H:%M:%S")
         elif isinstance(value, (int, float)):
-            self.json_properties[key] = str(value)
+            self._json_properties[key] = str(value)
         else:
             logging.warning(
                 f"Unsupported type for key {key}: {type(value)}, storing as string"
             )
-            self.json_properties[key] = str(value)
+            self._json_properties[key] = str(value)
 
     def get(self, key: str):
         if key in self.properties:
@@ -90,3 +78,14 @@ class Entry:
 
         logging.warning(f"Key {key} not found in entry properties")
         return None
+
+    def add_content(self, content: str):
+        self._content.append(content)
+    
+    def get_content(self, line: int | None = None) -> list[str] | str | None:
+        if line is not None:
+            if line < len(self._content):
+                return self._content[line]
+            logging.warning(f"Requested line {line} is out of range for content")
+            return None
+        return self._content

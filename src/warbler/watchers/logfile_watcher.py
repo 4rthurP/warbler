@@ -3,6 +3,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from pydantic import PrivateAttr
+
 from warbler import LOCAL_TZ
 from warbler.core.entry import Entry, EntryStatus
 from warbler.core.file import File
@@ -10,14 +12,14 @@ from warbler.core.watcher import Watcher
 
 
 class LogFileWatcher(Watcher):
-    source_file: File
+    _source_file: File = PrivateAttr()
 
     def find_new_entries(self, start_date: datetime) -> list[Entry]:
-        self.source_file = File(self.config.get("source"))
+        self._source_file = File(self.source)
 
-        if not self.source_file.exists():
+        if not self._source_file.exists():
             logging.warning(
-                f"LogFileWatcher: File {self.source_file.path} does not exist"
+                f"LogFileWatcher: File {self._source_file.path} does not exist"
             )
             return [
                 Entry(
@@ -26,14 +28,14 @@ class LogFileWatcher(Watcher):
                     "log",
                     datetime.now(LOCAL_TZ),
                     "LogFileWatcher: File not found",
-                    f"File {self.source_file.path} does not exist",
+                    f"File {self._source_file.path} does not exist",
                 )
             ]
 
         jobs: list[Entry] = []
-        current_job = None
+        current_job: Entry | None = None
 
-        with Path(self.source_file.path).open() as file:
+        with Path(self._source_file.path).open() as file:
             lines = file.readlines()
 
         for line in lines:
@@ -57,7 +59,7 @@ class LogFileWatcher(Watcher):
 
                 script = self.clean_script_name(script)
                 # Create a new job entry
-                current_job = Entry("log", str(self.source_file.path), script, timestamp)
+                current_job = Entry("log", str(self._source_file.path), script, timestamp)
 
                 current_job.set("start_timestamp", timestamp)
                 current_job.set("script", script)
@@ -68,7 +70,7 @@ class LogFileWatcher(Watcher):
             if current_job is None:
                 continue
 
-            current_job.content.append(line.strip())
+            current_job.add_content(line.strip())
 
             # Check for END line
             if " - END - " in line:
@@ -90,7 +92,7 @@ class LogFileWatcher(Watcher):
                             "log",
                             datetime.now(LOCAL_TZ),
                             "LogFileWatcher: Unexpected END line",
-                            f"Mismatch between the START line ({current_job.content[0]}) and the END line ({line.strip()})",
+                            f"Mismatch between the START line ({current_job.get_content(line=0)}) and the END line ({line.strip()})",
                         )
                     )
                     current_job = None

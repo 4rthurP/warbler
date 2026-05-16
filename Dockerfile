@@ -31,16 +31,15 @@ RUN if [ ! -z "$CRON_SCHEDULE" ]; then \
 # Copy the application files
 WORKDIR ${WORKDIR}
 COPY . .
-RUN if [ -f "warbler.env" ]; then mv warbler.env .env; fi
-# RUN if [ -f ".env" ]; then mv .env src/warbler/.env; fi
+RUN if [ -f "warbler.env" ]; then mv warbler.env src/warbler/.env; fi
+RUN if [ -f ".env" ]; then mv .env src/warbler/.env; fi
 
 #Setup uv
-COPY pyproject.toml uv.lock ./
+# COPY pyproject.toml uv.lock ./
 RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
     --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --compile-bytecode --no-build --no-install-project --link-mode=copy
 
-RUN pip install uv && uv sync && uv tool install fastapi && uv pip install -e .
+RUN uv sync && uv tool install fastapi && uv pip install -e .
 
 RUN chown -R ${USER}:${USER} ${WORKDIR}/warbler
 

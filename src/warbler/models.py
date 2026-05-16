@@ -44,4 +44,4 @@ class EntryModel(Base):
     additional_info = mapped_column(JSON)
 
     def __repr__(self) -> str:
-        return f"{self.entry_date} - New entry from {self.source_name}: {self.title} - Watched by {self.watcher_name}"
+        return f"{self.timestamp} - New entry from {self.source_name}: {self.title} - Watched by {self.watcher_name}"

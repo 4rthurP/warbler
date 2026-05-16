@@ -11,8 +11,13 @@ app = FastAPI()
 @app.get("/run_watchers")
 def run_watchers():
     for watcher_config in WATCHERS_CONFIG.get("watchers"):
+        # Remove extra args to avoid pydantic extra args exception
+        config = watcher_config.copy()
+        config.pop("class", None)
+
+        # Get the watcher class and run it
         watcher_class = watcher_config.get("class")
-        watcher = watcher_class(watcher_config)
+        watcher = watcher_class(**config)
         watcher.run()
 
 

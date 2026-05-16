@@ -1,30 +1,25 @@
 import logging
 from datetime import datetime
 
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from warbler import LOCAL_TZ, engine
-from warbler.core.config import Config
 from warbler.core.entry import Entry
 from warbler.core.notifier import Notifier
-from warbler.models import WatcherRun
+from warbler.models import EntryModel, WatcherRun
 
 
-class Watcher:
+class Watcher(BaseModel):
     notifiers: list[Notifier]
     entries: list[Entry]
-
-    def __init__(self, config: Config):
-        self.notifiers = []
-        self.config: Config = config
-        self.name: str = config.get("name")
-        self.source: str = config.get("source")
-        self.save_if_empty: bool = config.get("save_if_empty", True)
+    name: str
+    source: str
+    save_if_empty: bool = True
 
     def load(self):
         """Load the watcher configuration"""
-        notifiers = self.config.get("notifiers")
-        for notifier in notifiers:
+        for notifier in self.notifiers:
             self.add_notifier(notifier)
 
     def run(self):
@@ -87,6 +82,21 @@ class Watcher:
         """Send the new entries to all notifiers"""
         for notifier in self.notifiers:
             notifier.send(self.entries)
+
+    def get_latest_entry(self) -> Entry | None:
+        """Get the latest entry for this watcher"""
+
+        # Get the latest entry from the database
+        session = Session(engine)
+        latest_entry = (
+            session.query(EntryModel)
+            .where(EntryModel.source_name == self.name)
+            .order_by(EntryModel.created_at.desc())
+            .first()
+        )
+        session.close()
+
+        return latest_entry
 
     def save_run(self, run: WatcherRun):
         """Save the run to the database"""
