@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import PrivateAttr
@@ -106,7 +106,7 @@ class PingWatcher(CommandWatcher):
             logging.debug(f"PingWatcher: Host {self.source} is up, no entry returned")
             return []  # No retry interval set and not configured to return on success, skip the entry
 
-        time_since_last_ping = (datetime.now(LOCAL_TZ) - latest_entry.created_at).total_seconds()
+        time_since_last_ping = (datetime.now(LOCAL_TZ) - latest_entry.created_at.replace(tzinfo=UTC)).total_seconds()
         if time_since_last_ping >= self._success_retry_interval_seconds:
             # Delay is over, return the entry
             return [entry]
