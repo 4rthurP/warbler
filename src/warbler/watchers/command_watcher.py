@@ -9,6 +9,8 @@ from warbler.core.watcher import Watcher
 
 
 class CommandWatcher(Watcher):
+    source: str = "" # Override the parent source field which is not required for this watcher
+    
     command: str
     title: str = "Command executed"
     success_match_pattern: str | None = None
