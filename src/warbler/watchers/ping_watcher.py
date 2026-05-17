@@ -1,5 +1,5 @@
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from pydantic import PrivateAttr
@@ -77,17 +77,23 @@ class PingWatcher(CommandWatcher):
         # Check the last ping result to determine the retry interval
         latest_entry = self.get_latest_entry()
 
+        if entry.status == EntryStatus.SUCCESS:
+            entry.set_content(f"Host {self.source} is up and running.")  # Update the content for a successful ping
+            entry.title = f"Host {self.source} is up"
+        else:
+            entry.set_content(f"Host {self.source} is down, ping command failed.")  # Update the content for a failed ping
+            entry.title = f"ALERT: Host {self.source} is down"
+
         if not latest_entry:
             return [entry]  
 
         # If the status changed, notify immediately regardless of the retry interval 
         last_ping_failed = latest_entry.status == EntryStatus.FAILURE
         if not last_ping_failed and entry.status == EntryStatus.FAILURE:
-            logging.info(f"PingWatcher: Host {self.source} is down, ping command failed.")
             return [entry]
         if last_ping_failed and entry.status == EntryStatus.SUCCESS:
             logging.info(f"PingWatcher: Host {self.source} is up, ping command succeeded.")
-            entry.set_content(f"Host {self.source} is back up after being down.")  # Update the content for a successful ping after a failure
+            entry.title = f"RECOVERY: Host {self.source} is back up"
             return [entry]
 
         # Else compare the time since the last ping to the retry interval
@@ -95,6 +101,7 @@ class PingWatcher(CommandWatcher):
             time_since_last_ping = (datetime.now(LOCAL_TZ) - latest_entry.created_at).total_seconds()
             if time_since_last_ping >= self._error_retry_interval_seconds or self._error_retry_interval_seconds is None:
                 # Delay is over or no delay set, return the entry
+                entry.title = f"Host {self.source} is still down"
                 return [entry]  
 
             logging.debug(f"PingWatcher: Last ping failed {time_since_last_ping} seconds ago, which is less than the error retry interval of {self._error_retry_interval_seconds} seconds. Skipping ping.")
@@ -106,7 +113,7 @@ class PingWatcher(CommandWatcher):
             logging.debug(f"PingWatcher: Host {self.source} is up, no entry returned")
             return []  # No retry interval set and not configured to return on success, skip the entry
 
-        time_since_last_ping = (datetime.now(LOCAL_TZ) - latest_entry.created_at.replace(tzinfo=UTC)).total_seconds()
+        time_since_last_ping = (datetime.now(LOCAL_TZ) - latest_entry.created_at.replace(tzinfo=LOCAL_TZ)).total_seconds()
         if time_since_last_ping >= self._success_retry_interval_seconds:
             # Delay is over, return the entry
             return [entry]

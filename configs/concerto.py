@@ -22,8 +22,8 @@ config = {
             "name": "Fugue Uptime",
             "command": "tailscale ping --c 3 fugue",
             "success_match_pattern": "pong",
+            "retry_interval": None,
             "on_error_retry_interval": "30m",
-            "on_success_retry_interval": None,
             "notifiers": [
                 SlackNotifier(
                     name="slack_cron",

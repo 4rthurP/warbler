@@ -10,6 +10,7 @@ config = {
             "name": "Concerto Uptime",
             "command": "tailscale ping --c 3 Concerto",
             "success_match_pattern": "pong",
+            "retry_interval": None,
             "on_error_retry_interval": "5m",
             "on_success_retry_interval": None,
             "notifiers": [
