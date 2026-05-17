@@ -13,12 +13,12 @@ from warbler.models import EntryModel, WatcherRun
 class Watcher(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    notifiers: list[Notifier] = []
-    entries: list[Entry]
+    notifiers: list[Notifier]
     name: str
     source: str
     save_if_empty: bool = True
 
+    entries: list[Entry] = PrivateAttr(default_factory=list)
     _notifiers: list[Notifier] = PrivateAttr()
 
     def load(self):

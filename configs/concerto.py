@@ -8,7 +8,7 @@ config = {
     "watchers": [
         {
             "class": LogFileWatcher,
-            "name": "CronWacther",
+            "name": "CronWatcher",
             "source": os.getenv("CRON_LOG_FILE", "/var/log/cron.log"),
             "notifiers": [
                 SlackNotifier(
