@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 
 from warbler import LOCAL_TZ
 from warbler.models import EntryModel
@@ -18,8 +18,6 @@ class EntryStatus(StrEnum):
 
 
 class Entry(BaseModel):
-    properties: dict = Field(default_factory=dict)
-    json_properties: dict[str, str] = Field(default_factory=dict)
     title: str | None = None
     source_type: str
     source_name: str
@@ -30,10 +28,14 @@ class Entry(BaseModel):
 
     _content: list[str] = PrivateAttr()
     _status: EntryStatus = PrivateAttr()
+    _properties: dict[str, Any] = PrivateAttr()
     _json_properties: dict[str, str] = PrivateAttr()
 
 
     def model_post_init(self, context: Any) -> None:
+        self._properties = {}
+        self._json_properties = {}
+
         self._status = EntryStatus(self.status)
 
         if isinstance(self.content, str):
@@ -57,7 +59,7 @@ class Entry(BaseModel):
 
     def set(self, key: str, value: Any):
         # Store the value as is for internal use
-        self.properties[key] = value
+        self._properties[key] = value
 
         # Convert the value to a string for JSON serialization
         if isinstance(value, str):
@@ -73,8 +75,8 @@ class Entry(BaseModel):
             self._json_properties[key] = str(value)
 
     def get(self, key: str):
-        if key in self.properties:
-            return self.properties[key]
+        if key in self._properties:
+            return self._properties[key]
 
         logging.warning(f"Key {key} not found in entry properties")
         return None

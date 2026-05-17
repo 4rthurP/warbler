@@ -23,6 +23,7 @@ class Watcher(BaseModel):
 
     def load(self):
         """Load the watcher configuration"""
+        self._notifiers = []
         for notifier in self.notifiers:
             self.add_notifier(notifier)
 

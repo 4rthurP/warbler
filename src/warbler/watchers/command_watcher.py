@@ -10,7 +10,7 @@ from warbler.core.watcher import Watcher
 
 class CommandWatcher(Watcher):
     source: str = "" # Override the parent source field which is not required for this watcher
-    
+
     command: str
     title: str = "Command executed"
     success_match_pattern: str | None = None
@@ -51,11 +51,11 @@ class CommandWatcher(Watcher):
             content.append(f"Error: {result.stderr}")
 
         return Entry(
+            title=self.title,
             source_type="command",
             source_name=self.name,
             service="command",
             timestamp=datetime.now(LOCAL_TZ),
-            title=self.title,
             content=content,
             status=status,
         )

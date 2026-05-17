@@ -23,12 +23,12 @@ class LogFileWatcher(Watcher):
             )
             return [
                 Entry(
-                    "self",
-                    self.__class__.__name__,
-                    "log",
-                    datetime.now(LOCAL_TZ),
-                    "LogFileWatcher: File not found",
-                    f"File {self._source_file.path} does not exist",
+                    title="LogFileWatcher: File not found",
+                    source_type="log",
+                    source_name=self.__class__.__name__,
+                    service="log",
+                    timestamp=datetime.now(LOCAL_TZ),
+                    content=f"File {self._source_file.path} does not exist",
                 )
             ]
 
@@ -59,7 +59,13 @@ class LogFileWatcher(Watcher):
 
                 script = self.clean_script_name(script)
                 # Create a new job entry
-                current_job = Entry("log", str(self._source_file.path), script, timestamp)
+                current_job = Entry(
+                    title="LogFileWatcher: Job started",
+                    source_type="log",
+                    source_name=self.__class__.__name__,
+                    service="log",
+                    timestamp=timestamp,
+                )
 
                 current_job.set("start_timestamp", timestamp)
                 current_job.set("script", script)
@@ -87,12 +93,12 @@ class LogFileWatcher(Watcher):
                     )
                     jobs.append(
                         Entry(
-                            "self",
-                            self.__class__.__name__,
-                            "log",
-                            datetime.now(LOCAL_TZ),
-                            "LogFileWatcher: Unexpected END line",
-                            f"Mismatch between the START line ({current_job.get_content(line=0)}) and the END line ({line.strip()})",
+                            title="LogFileWatcher: Unexpected END line",
+                            source_type="log",
+                            source_name=self.__class__.__name__,
+                            service="log",
+                            timestamp=datetime.now(LOCAL_TZ),
+                            content=f"Mismatch between the START line ({current_job.get_content(line=0)}) and the END line ({line.strip()})",
                         )
                     )
                     current_job = None
