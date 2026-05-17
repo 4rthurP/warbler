@@ -18,7 +18,7 @@ class Watcher(BaseModel):
     source: str
     save_if_empty: bool = True
 
-    entries: list[Entry] = PrivateAttr(default_factory=list)
+    _entries: list[Entry] = PrivateAttr(default_factory=list)
     _notifiers: list[Notifier] = PrivateAttr()
 
     def load(self):
@@ -44,7 +44,7 @@ class Watcher(BaseModel):
         )
 
         start_date = self.find_latest_run_date()  # Get the latest run date
-        self.entries = self.find_new_entries(
+        self._entries = self.find_new_entries(
             start_date
         )  # Find the new entries since this date
         self.save_new_entries(run)  # Save the new entries to the database
@@ -76,7 +76,7 @@ class Watcher(BaseModel):
     def save_new_entries(self, run: WatcherRun):
         """Save the new entries to the database"""
         session = Session(engine)
-        for entry in self.entries:
+        for entry in self._entries:
             logging.info(f"Saving entry {entry} for run {run.id}")
             session.add(entry.get_model(run.name, run.id))
         session.commit()
@@ -85,7 +85,7 @@ class Watcher(BaseModel):
     def send_new_entries(self):
         """Send the new entries to all notifiers"""
         for notifier in self._notifiers:
-            notifier.send(self.entries)
+            notifier.send(self._entries)
 
     def get_latest_entry(self) -> Entry | None:
         """Get the latest entry for this watcher"""
@@ -106,7 +106,7 @@ class Watcher(BaseModel):
         """Save the run to the database"""
 
         # Check if there are no new entries and save the run if configured to do so
-        if len(self.entries) == 0 and not self.save_if_empty:
+        if len(self._entries) == 0 and not self.save_if_empty:
             logging.info(
                 f"Watcher {self.name} has no new entries and will not save the run"
             )
