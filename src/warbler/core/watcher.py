@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, PrivateAttr
 from sqlalchemy.orm import Session
 
 from warbler import LOCAL_TZ, engine
@@ -11,11 +11,15 @@ from warbler.models import EntryModel, WatcherRun
 
 
 class Watcher(BaseModel):
-    notifiers: list[Notifier]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    notifiers: list[Notifier] = []
     entries: list[Entry]
     name: str
     source: str
     save_if_empty: bool = True
+
+    _notifiers: list[Notifier] = PrivateAttr()
 
     def load(self):
         """Load the watcher configuration"""
@@ -80,7 +84,7 @@ class Watcher(BaseModel):
 
     def send_new_entries(self):
         """Send the new entries to all notifiers"""
-        for notifier in self.notifiers:
+        for notifier in self._notifiers:
             notifier.send(self.entries)
 
     def get_latest_entry(self) -> Entry | None:
@@ -120,4 +124,4 @@ class Watcher(BaseModel):
 
     def add_notifier(self, notifier: Notifier):
         """Add a notifier to the watcher"""
-        self.notifiers.append(notifier)
+        self._notifiers.append(notifier)
