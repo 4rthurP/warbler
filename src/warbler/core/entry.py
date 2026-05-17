@@ -42,6 +42,8 @@ class Entry(BaseModel):
             self._content = [self.content]
         elif isinstance(self.content, list):
             self._content = self.content
+        else:
+            self._content = []
 
     def get_model(self, watcher: str, run_id: str) -> EntryModel:
         return EntryModel(
