@@ -31,19 +31,12 @@ class Entry(BaseModel):
     _properties: dict[str, Any] = PrivateAttr()
     _json_properties: dict[str, str] = PrivateAttr()
 
-
     def model_post_init(self, context: Any) -> None:
         self._properties = {}
         self._json_properties = {}
 
         self._status = EntryStatus(self.status)
-
-        if isinstance(self.content, str):
-            self._content = [self.content]
-        elif isinstance(self.content, list):
-            self._content = self.content
-        else:
-            self._content = []
+        self.set_content(self.content)
 
     def get_model(self, watcher: str, run_id: str) -> EntryModel:
         return EntryModel(
@@ -83,9 +76,18 @@ class Entry(BaseModel):
         logging.warning(f"Key {key} not found in entry properties")
         return None
 
+    def set_content(self, content: list[str] | str | None):
+        if isinstance(self.content, str):
+            self._content = [self.content]
+            return
+        if isinstance(self.content, list):
+            self._content = self.content
+            return
+        self._content = []
+
     def add_content(self, content: str):
         self._content.append(content)
-    
+
     def get_content(self, line: int | None = None) -> list[str] | str | None:
         if line is not None:
             if line < len(self._content):
